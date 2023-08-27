@@ -18,6 +18,16 @@ export const addSelectList = (selector: string, text: string) => {
   }
 };
 
+export const removeSelectList = (selector: string, text: string) => {
+  const element = document.getElementById(selector) as HTMLSelectElement;
+  if (element) {
+    const optionToRemove = element.querySelector(`option[value="${text}"]`);
+    if (optionToRemove) {
+      optionToRemove.remove();
+    }
+  }
+};
+
 export const makeRandomString = (length: number) => {
   let result = "";
   const characters =

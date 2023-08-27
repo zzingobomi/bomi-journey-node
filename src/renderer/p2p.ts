@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
-import { addSelectList, addText, replaceText } from "./utils";
+import { addSelectList, addText, removeSelectList, replaceText } from "./utils";
 
 enum MessageType {
   Hello = "hello",
@@ -32,7 +32,8 @@ interface ICandidatePayload {
 
 interface IPeerInfo {
   peerConnection: RTCPeerConnection;
-  sendChannel: RTCDataChannel;
+  sendChannel?: RTCDataChannel;
+  receiveChannel?: RTCDataChannel;
 }
 
 interface IPeerConnections {
@@ -107,8 +108,17 @@ socket.on(MessageType.Disconnect, (data) => {
   console.log(data);
 });
 
-socket.on(MessageType.OtherExit, (data) => {
-  console.log(data);
+socket.on(MessageType.OtherExit, (exitSocketId: string) => {
+  const peerInfo = peerConnections[exitSocketId];
+  if (peerInfo.sendChannel) {
+    peerInfo.sendChannel.close();
+  }
+  if (peerInfo.receiveChannel) {
+    peerInfo.receiveChannel.close();
+  }
+  peerConnections[exitSocketId] = null;
+  delete peerConnections[exitSocketId];
+  removeSelectList("others", exitSocketId);
 });
 
 function createPeerConnection(otherSocketId: string) {
@@ -138,6 +148,12 @@ function createPeerConnection(otherSocketId: string) {
     }
   };
 
+  const peerInfo: IPeerInfo = {
+    peerConnection,
+  };
+
+  peerConnections[otherSocketId] = peerInfo;
+
   // ========================
   // DataChannel
   // ========================
@@ -148,9 +164,11 @@ function createPeerConnection(otherSocketId: string) {
   sendChannel.onclose = (ev) => {
     handleSendChannelStatusChange(sendChannel, ev);
   };
+  peerInfo.sendChannel = sendChannel;
 
   peerConnection.ondatachannel = (ev) => {
     const receiveChannel = ev.channel;
+    peerInfo.receiveChannel = receiveChannel;
     receiveChannel.onopen = (ev) => {
       handleReceiveChannelStatusChange(receiveChannel, ev);
     };
@@ -176,13 +194,6 @@ function createPeerConnection(otherSocketId: string) {
   peerConnection.oniceconnectionstatechange = (ev) => {
     //console.log("Ice Connection State has changed:", ev);
   };
-
-  const peerInfo: IPeerInfo = {
-    peerConnection,
-    sendChannel,
-  };
-
-  peerConnections[otherSocketId] = peerInfo;
 
   return peerConnection;
 }
@@ -225,6 +236,8 @@ function handleReceiveMessage(
 document.getElementById("send-button").addEventListener("click", () => {
   const msgInputEle = document.getElementById("message") as HTMLInputElement;
   const toSelectEle = document.getElementById("others") as HTMLSelectElement;
+
+  console.log(peerConnections[toSelectEle.value]);
 
   peerConnections[toSelectEle.value].sendChannel.send(
     `from ${socket.id}: ${msgInputEle.value}`
