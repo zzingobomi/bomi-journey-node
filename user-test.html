@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Test</title>
+
+    <!-- colyseus.js client -->
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/colyseus.js@preview/dist/colyseus.js"
+    ></script>
+
+    <style>
+      .player {
+        width: 100px;
+        height: 100px;
+        position: absolute;
+        padding-top: 24px;
+        box-sizing: border-box;
+        left: 0;
+        top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <strong>commands</strong><br />
+
+    <button onclick="up()">up</button>
+    <button onclick="down()">down</button>
+    <br />
+    <button onclick="left()">left</button>
+    <button onclick="right()">right</button>
+
+    <script type="module">
+      import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
+
+      const socket = io("ws://localhost:25000", {
+        reconnectionDelayMax: 10000,
+      });
+
+      let peerConnection;
+      let sendChannel;
+
+      socket.on("hello", (data) => {
+        console.log("user test socket connected", socket.id);
+        replaceText("socket-id", socket.id);
+      });
+
+      socket.emit("joinRoom", { roomId: "userroom1", type: "user" });
+
+      socket.on("gameserver", async (gameServer) => {
+        peerConnection = createPeerConnection(gameServer);
+        const offerSdp = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offerSdp);
+
+        const offerPayload = {
+          sdp: offerSdp,
+          offerSendId: socket.id,
+          offerReceiveId: gameServer,
+        };
+
+        socket.emit("offer", offerPayload);
+      });
+
+      socket.on("answer", (data) => {
+        const { sdp, answerSendId } = data;
+        peerConnection.setRemoteDescription(sdp);
+      });
+
+      function createPeerConnection(gameServerSocketId) {
+        const peerConnection = new RTCPeerConnection({
+          iceServers: [
+            {
+              urls: [
+                "stun:stun.l.google.com:19302",
+                "stun:stun1.l.google.com:19302",
+                "stun:stun2.l.google.com:19302",
+                "stun:stun3.l.google.com:19302",
+                "stun:stun4.l.google.com:19302",
+              ],
+            },
+          ],
+        });
+
+        peerConnection.onicecandidate = (ev) => {
+          if (ev.candidate) {
+            const candidatePayload = {
+              candidate: ev.candidate,
+              candidateSendId: socket.id,
+              candidateReceiveId: gameServerSocketId,
+            };
+
+            socket.emit("candidate", candidatePayload);
+          }
+        };
+
+        // ========================
+        // DataChannel
+        // ========================
+        sendChannel = peerConnection.createDataChannel("data");
+        sendChannel.onopen = (ev) => {
+          handleSendChannelStatusChange(sendChannel, ev);
+        };
+        sendChannel.onclose = (ev) => {
+          handleSendChannelStatusChange(sendChannel, ev);
+        };
+
+        peerConnection.ondatachannel = (ev) => {
+          const receiveChannel = ev.channel;
+          receiveChannel.onopen = (ev) => {
+            handleReceiveChannelStatusChange(receiveChannel, ev);
+          };
+          receiveChannel.onclose = (ev) => {
+            handleReceiveChannelStatusChange(receiveChannel, ev);
+          };
+          receiveChannel.onmessage = (ev) => {
+            handleReceiveMessage(receiveChannel, ev);
+          };
+        };
+
+        // ========================
+        // StateChange
+        // ========================
+
+        peerConnection.onconnectionstatechange = (ev) => {
+          console.log(
+            "Peer Connection State has changed:",
+            peerConnection.connectionState
+          );
+        };
+
+        peerConnection.oniceconnectionstatechange = (ev) => {
+          //console.log("Ice Connection State has changed:", ev);
+        };
+
+        return peerConnection;
+      }
+
+      // ========================
+      // Handle DataChannel
+      // ========================
+
+      function handleSendChannelStatusChange(dataChannel, event) {
+        if (dataChannel) {
+          if (dataChannel.readyState === "open") {
+            console.log("Data channel is open.");
+          } else if (dataChannel.readyState === "closed") {
+            console.log("Data channel is closed.");
+          }
+        }
+      }
+
+      function handleReceiveChannelStatusChange(dataChannel, event) {
+        if (dataChannel) {
+          console.log(
+            "Receive channel's status has changed to " + dataChannel.readyState
+          );
+        }
+      }
+
+      function handleReceiveMessage(dataChannel, event) {
+        console.log(event.data);
+      }
+
+      document.getElementById("send-button").addEventListener("click", () => {
+        const msgInputEle = document.getElementById("message");
+        const toSelectEle = document.getElementById("others");
+
+        sendChannel.send(`from ${socket.id}: ${msgInputEle.value}`);
+
+        msgInputEle.value = "";
+      });
+
+      function replaceText(selector, text) {
+        const element = document.getElementById(selector);
+        if (element) element.innerText = text;
+      }
+
+      function addText(selector, text) {
+        const element = document.getElementById(selector);
+        if (element) element.innerText += text + "\n";
+      }
+    </script>
+  </body>
+</html>

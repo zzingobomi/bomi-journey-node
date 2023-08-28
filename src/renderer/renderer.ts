@@ -32,5 +32,6 @@ console.log(
 
 import "./mvp.css";
 import "./index.css";
-import "./p2p";
+import "./p2pNode";
+import "./p2pGame";
 import "./utils";

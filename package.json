@@ -27,6 +27,7 @@
     "@electron-forge/plugin-auto-unpack-natives": "^6.4.1",
     "@electron-forge/plugin-webpack": "^6.4.1",
     "@types/dotenv-webpack": "^7.0.4",
+    "@types/pubsub-js": "^1.8.3",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "@vercel/webpack-asset-relocator-loader": "1.7.3",
@@ -44,7 +45,9 @@
     "typescript": "~4.5.4"
   },
   "dependencies": {
+    "@colyseus/schema": "^2.0.14",
     "electron-squirrel-startup": "^1.0.0",
+    "pubsub-js": "^1.9.4",
     "socket.io-client": "^4.7.2"
   }
 }

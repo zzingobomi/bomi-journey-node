@@ -1,46 +1,27 @@
 import { io } from "socket.io-client";
-import { addSelectList, addText, removeSelectList, replaceText } from "./utils";
+import { addSelectList, removeSelectList, replaceText } from "./utils";
+import {
+  MessageType,
+  IOfferPayload,
+  IAnswerPayload,
+  ICandidatePayload,
+  IPeerInfo,
+  IPeerConnections,
+  DATA_CHANNEL_NAME,
+  EventType,
+} from "./types";
+import { GameServer } from "../game/GameServer";
+import PubSub from "pubsub-js";
 
-enum MessageType {
-  Hello = "hello",
-  JoinRoom = "joinRoom",
-  OtherUsers = "otherUsers",
-  Offer = "offer",
-  Answer = "answer",
-  Candidate = "candidate",
-  Disconnect = "disconnect",
-  OtherExit = "otherExit",
-}
+// ========================
+// GameServer
+// ========================
 
-interface IOfferPayload {
-  sdp: RTCSessionDescriptionInit;
-  offerSendId: string;
-  offerReceiveId: string;
-}
+const gameServer = new GameServer();
 
-interface IAnswerPayload {
-  sdp: RTCSessionDescriptionInit;
-  answerSendId: string;
-  answerReceiveId: string;
-}
-
-interface ICandidatePayload {
-  candidate: RTCIceCandidate;
-  candidateSendId: string;
-  candidateReceiveId: string;
-}
-
-interface IPeerInfo {
-  peerConnection: RTCPeerConnection;
-  sendChannel?: RTCDataChannel;
-  receiveChannel?: RTCDataChannel;
-}
-
-interface IPeerConnections {
-  [key: string]: IPeerInfo;
-}
-
-const DATA_CHANNEL_NAME = "data";
+// ========================
+// P2P
+// ========================
 
 const peerConnections: IPeerConnections = {};
 
@@ -52,32 +33,15 @@ const socket = io(
 );
 
 socket.on(MessageType.Hello, (data) => {
-  console.log("socket connected", socket.id);
-  replaceText("socket-id", socket.id);
+  console.log("game socket connected", socket.id);
+  replaceText("socket-id-game", socket.id);
 });
 
-socket.emit(MessageType.JoinRoom, { roomId: "room1" });
-
-socket.on(MessageType.OtherUsers, async (otherUsers: string[]) => {
-  for (const otherUser of otherUsers) {
-    addSelectList("others", otherUser);
-    const peerConnection = createPeerConnection(otherUser);
-    const offerSdp = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offerSdp);
-
-    const offerPayload: IOfferPayload = {
-      sdp: offerSdp,
-      offerSendId: socket.id,
-      offerReceiveId: otherUser,
-    };
-
-    socket.emit(MessageType.Offer, offerPayload);
-  }
-});
+socket.emit(MessageType.JoinRoom, { roomId: "userroom1", type: "gameServer" });
 
 socket.on(MessageType.Offer, async (data: IOfferPayload) => {
   const { sdp, offerSendId } = data;
-  addSelectList("others", offerSendId);
+  addSelectList("users-game", offerSendId);
   const peerConnection = createPeerConnection(offerSendId);
   await peerConnection.setRemoteDescription(sdp);
   const answerSdp = await peerConnection.createAnswer();
@@ -92,12 +56,6 @@ socket.on(MessageType.Offer, async (data: IOfferPayload) => {
   socket.emit(MessageType.Answer, answerPayload);
 });
 
-socket.on(MessageType.Answer, (data: IAnswerPayload) => {
-  const { sdp, answerSendId } = data;
-  const peerConnection = peerConnections[answerSendId].peerConnection;
-  peerConnection.setRemoteDescription(sdp);
-});
-
 socket.on(MessageType.Candidate, async (data: ICandidatePayload) => {
   const { candidate, candidateSendId } = data;
   const peerConnection = peerConnections[candidateSendId].peerConnection;
@@ -110,15 +68,17 @@ socket.on(MessageType.Disconnect, (data) => {
 
 socket.on(MessageType.OtherExit, (exitSocketId: string) => {
   const peerInfo = peerConnections[exitSocketId];
-  if (peerInfo.sendChannel) {
-    peerInfo.sendChannel.close();
+  if (peerInfo) {
+    if (peerInfo.sendChannel) {
+      peerInfo.sendChannel.close();
+    }
+    if (peerInfo.receiveChannel) {
+      peerInfo.receiveChannel.close();
+    }
+    peerConnections[exitSocketId] = null;
+    delete peerConnections[exitSocketId];
   }
-  if (peerInfo.receiveChannel) {
-    peerInfo.receiveChannel.close();
-  }
-  peerConnections[exitSocketId] = null;
-  delete peerConnections[exitSocketId];
-  removeSelectList("others", exitSocketId);
+  removeSelectList("users-game", exitSocketId);
 });
 
 function createPeerConnection(otherSocketId: string) {
@@ -149,6 +109,7 @@ function createPeerConnection(otherSocketId: string) {
   };
 
   const peerInfo: IPeerInfo = {
+    id: otherSocketId,
     peerConnection,
   };
 
@@ -185,10 +146,11 @@ function createPeerConnection(otherSocketId: string) {
   // ========================
 
   peerConnection.onconnectionstatechange = (ev) => {
-    console.log(
-      "Peer Connection State has changed:",
-      peerConnection.connectionState
-    );
+    if (peerConnection.connectionState === "connected") {
+      gameServer.onJoin(peerInfo);
+    } else if (peerConnection.connectionState === "disconnected") {
+      gameServer.onLeave(peerInfo);
+    }
   };
 
   peerConnection.oniceconnectionstatechange = (ev) => {
@@ -208,9 +170,9 @@ function handleSendChannelStatusChange(
 ) {
   if (dataChannel) {
     if (dataChannel.readyState === "open") {
-      console.log("Data channel is open.");
+      console.log("game data channel is open.");
     } else if (dataChannel.readyState === "closed") {
-      console.log("Data channel is closed.");
+      console.log("game data channel is closed.");
     }
   }
 }
@@ -221,7 +183,7 @@ function handleReceiveChannelStatusChange(
 ) {
   if (dataChannel) {
     console.log(
-      "Receive channel's status has changed to " + dataChannel.readyState
+      "game receive channel's status has changed to " + dataChannel.readyState
     );
   }
 }
@@ -230,14 +192,16 @@ function handleReceiveMessage(
   dataChannel: RTCDataChannel,
   event: MessageEvent<any>
 ) {
-  addText("received", event.data);
+  PubSub.publish(EventType.ReceiveData, event.data);
 }
 
-document.getElementById("send-button").addEventListener("click", () => {
-  const msgInputEle = document.getElementById("message") as HTMLInputElement;
-  const toSelectEle = document.getElementById("others") as HTMLSelectElement;
-
-  console.log(peerConnections[toSelectEle.value]);
+document.getElementById("send-button-game").addEventListener("click", () => {
+  const msgInputEle = document.getElementById(
+    "message-game"
+  ) as HTMLInputElement;
+  const toSelectEle = document.getElementById(
+    "users-game"
+  ) as HTMLSelectElement;
 
   peerConnections[toSelectEle.value].sendChannel.send(
     `from ${socket.id}: ${msgInputEle.value}`

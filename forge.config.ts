@@ -28,7 +28,7 @@ const config: ForgeConfig = {
         config: rendererConfig,
         entryPoints: [
           {
-            html: "./src/view/index.html",
+            html: "./src/views/index.html",
             js: "./src/renderer/renderer.ts",
             name: "main_window",
             preload: {
