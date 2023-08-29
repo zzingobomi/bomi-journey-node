@@ -2,6 +2,7 @@ import { Client, EventType } from "@src/renderer/types";
 import { State } from "./PlayerSchema";
 import { Protocol } from "./Protocol";
 import { SchemaSerializer } from "./SchemaSerializer";
+import PubSub from "pubsub-js";
 
 export class GameServer {
   public clients: Client[] = [];
