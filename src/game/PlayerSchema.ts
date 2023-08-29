@@ -1,18 +1,14 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Schema, type, MapSchema } from "@colyseus/schema";
 
 export class Player extends Schema {
-  // @ts-ignore
   @type("number")
   public x = Math.floor(Math.random() * 400);
 
-  // @ts-ignore
   @type("number")
   public y = Math.floor(Math.random() * 400);
 }
 
 export class State extends Schema {
-  // @ts-ignore
   @type({ map: Player })
   players = new MapSchema<Player>();
 
