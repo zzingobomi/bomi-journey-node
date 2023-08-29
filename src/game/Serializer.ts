@@ -1,4 +1,4 @@
-import { Client } from "../renderer/types";
+import { Client } from "@src/renderer/types";
 
 export interface Serializer<T> {
   id: string;

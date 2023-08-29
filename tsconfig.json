@@ -13,7 +13,7 @@
     "resolveJsonModule": true,
     "experimentalDecorators": true,
     "paths": {
-      "*": ["node_modules/*"]
+      "@src/*": ["src/*"]
     }
   },
   "include": ["src/**/*"]

@@ -1,6 +1,8 @@
 import type { Configuration } from "webpack";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const Dotenv = require("dotenv-webpack");
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const path = require("path");
 
 import { rules } from "./webpack.rules";
 
@@ -15,6 +17,9 @@ export const mainConfig: Configuration = {
     rules,
   },
   resolve: {
+    alias: {
+      "@src": path.resolve(__dirname, "./src"),
+    },
     extensions: [".js", ".ts", ".jsx", ".tsx", ".css", ".json"],
   },
   plugins: [new Dotenv()],

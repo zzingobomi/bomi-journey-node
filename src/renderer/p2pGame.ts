@@ -10,7 +10,7 @@ import {
   DATA_CHANNEL_NAME,
   EventType,
 } from "./types";
-import { GameServer } from "../game/GameServer";
+import { GameServer } from "@src/game/GameServer";
 import PubSub from "pubsub-js";
 
 // ========================

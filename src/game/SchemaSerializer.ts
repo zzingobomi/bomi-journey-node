@@ -1,4 +1,4 @@
-import { Client } from "../renderer/types";
+import { Client } from "@src/renderer/types";
 import { Protocol } from "./Protocol";
 import { Serializer } from "./Serializer";
 import { Schema, Reflection } from "@colyseus/schema";

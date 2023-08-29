@@ -1,4 +1,4 @@
-import { Client, EventType } from "../renderer/types";
+import { Client, EventType } from "@src/renderer/types";
 import { State } from "./PlayerSchema";
 import { Protocol } from "./Protocol";
 import { SchemaSerializer } from "./SchemaSerializer";
