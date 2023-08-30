@@ -37,8 +37,8 @@ const config: ForgeConfig = {
           },
         ],
       },
-      port: parseInt(process.env.APP_PORT ?? "9000"),
-      loggerPort: parseInt(process.env.APP_LOGGER_PORT ?? "9001"),
+      port: parseInt(process.env.APP_PORT ?? "9100"),
+      loggerPort: parseInt(process.env.APP_LOGGER_PORT ?? "9101"),
     }),
   ],
 };

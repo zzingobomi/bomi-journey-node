@@ -6,7 +6,7 @@
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",
-    "start:2": "cross-env APP_PORT=9100 APP_LOGGER_PORT=9101 electron-forge start",
+    "start:2": "cross-env APP_PORT=9200 APP_LOGGER_PORT=9201 electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
