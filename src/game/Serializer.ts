@@ -1,9 +1,9 @@
-import { Client } from "@src/renderer/types";
+import { RtcSocket } from "@src/p2p/RtcSocket";
 
 export interface Serializer<T> {
   id: string;
   reset(data: any): void;
-  getFullState(client?: Client): any;
-  applyPatches(clients: Client[]): boolean;
+  getFullState(rtcSocket?: RtcSocket): any;
+  applyPatches(rtcSockets: RtcSocket[]): boolean;
   handshake?(): number[];
 }

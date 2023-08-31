@@ -1,7 +1,7 @@
-import { Client } from "@src/renderer/types";
+import { Schema, Reflection } from "@colyseus/schema";
+import { RtcSocket } from "@src/p2p/RtcSocket";
 import { Protocol } from "./Protocol";
 import { Serializer } from "./Serializer";
-import { Schema, Reflection } from "@colyseus/schema";
 
 export class SchemaSerializer<T> implements Serializer<T> {
   public id = "@colyseus/schema";
@@ -13,22 +13,22 @@ export class SchemaSerializer<T> implements Serializer<T> {
     this.state = newState;
   }
 
-  public getFullState(client?: Client) {
+  public getFullState(rtcSocket?: RtcSocket) {
     const fullEncodedState = this.state.encodeAll(true);
     return fullEncodedState;
   }
 
-  public applyPatches(clients: Client[]): boolean {
+  public applyPatches(rtcSockets: RtcSocket[]): boolean {
     const hasChanges = this.state["$changes"].changes.size > 0;
 
     if (hasChanges) {
-      let numClients = clients.length;
+      let numClients = rtcSockets.length;
 
       // get patch bytes
       const patches = this.state.encode(false, [], true);
 
       while (numClients--) {
-        const client = clients[numClients];
+        const client = rtcSockets[numClients];
 
         if (
           client.peerConnection.connectionState === "connected" &&

@@ -38,8 +38,8 @@ import { addSelectList, addText, removeSelectList, replaceText } from "./utils";
 
 export class App {
   p2pNode: P2P;
-  // p2pGame: P2P;
-  // gameServer: GameServer;
+  p2pGame: P2P;
+  gameServer: GameServer;
 
   constructor() {
     // NodeP2P 세팅
@@ -55,11 +55,18 @@ export class App {
     this.p2pNode.OnAddRtcSocket = (id: string) => {
       const rtcSocket = this.p2pNode.GetRtcSocket(id);
       rtcSocket.OnConnectionStateChange = (ev: Event) => {
-        console.log(
-          `${id} RTCPeerConnection: ${
-            (ev.currentTarget as RTCPeerConnection).connectionState
-          }`
-        );
+        const state = (ev.currentTarget as RTCPeerConnection).connectionState;
+        switch (state) {
+          case "connected":
+            console.log(`${rtcSocket.id} is connected`);
+            break;
+          case "disconnected":
+            console.log(`${rtcSocket.id} is disconnected`);
+            break;
+          default:
+            console.log(state);
+            break;
+        }
       };
       rtcSocket.OnReceiveChannelMessage = (ev: MessageEvent<any>) => {
         addText("received-node", ev.data);
@@ -67,18 +74,46 @@ export class App {
       addSelectList("others-node", id);
     };
     this.p2pNode.OnRemoveRtcSocket = (id: string) => {
-      removeSelectList("socket-id-node", id);
+      removeSelectList("others-node", id);
     };
 
     // GameP2P 세팅
-    // this.p2pGame = new P2P(
-    //   process.env.WS_SCHEME,
-    //   process.env.WS_HOST,
-    //   process.env.WS_PORT
-    // );
-    // this.p2pGame.Init("userroom1", "gameserver");
+    this.p2pGame = new P2P(
+      process.env.WS_SCHEME,
+      process.env.WS_HOST,
+      process.env.WS_PORT
+    );
+    this.p2pGame.Join("userroom1", "gameserver");
+    this.p2pGame.OnSocketConnected = (socketId: string) => {
+      replaceText("socket-id-game", socketId);
+    };
+    this.p2pGame.OnAddRtcSocket = (id: string) => {
+      const rtcSocket = this.p2pGame.GetRtcSocket(id);
+      rtcSocket.OnConnectionStateChange = (ev: Event) => {
+        const state = (ev.currentTarget as RTCPeerConnection).connectionState;
+        switch (state) {
+          case "connected":
+            console.log(`${rtcSocket.id} is connected`);
+            break;
+          case "disconnected":
+            console.log(`${rtcSocket.id} is disconnected`);
+            break;
+          default:
+            console.log(state);
+            break;
+        }
+      };
+      rtcSocket.OnReceiveChannelMessage = (ev: MessageEvent<any>) => {
+        addText("received-game", ev.data);
+      };
+      addSelectList("users-game", id);
+    };
+    this.p2pGame.OnRemoveRtcSocket = (id: string) => {
+      removeSelectList("users-game", id);
+    };
+
     // GameServer 세팅
-    //this.gameServer = new GameServer();
+    this.gameServer = new GameServer();
 
     // Usage
     document

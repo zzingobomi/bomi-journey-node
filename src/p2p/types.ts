@@ -13,6 +13,10 @@ export enum SocketMsgType {
   OtherExit = "otherExit",
 }
 
+export enum RtcSocketEventType {
+  ReceiveData = "receiveData",
+}
+
 export interface IOfferPayload {
   sdp: RTCSessionDescriptionInit;
   offerSendId?: string;

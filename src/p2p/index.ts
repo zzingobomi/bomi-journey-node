@@ -43,11 +43,6 @@ export class P2P {
           payload.candidateSendId = this.socket.id;
           this.socket.emit(SocketMsgType.Candidate, payload);
         };
-        // rtcSocket.OnConnectionStateChange = (ev: Event) => {
-        //   const rtcConnectionState = (ev.currentTarget as RTCPeerConnection)
-        //     .connectionState;
-        //   console.log(`${otherUser} is ${rtcConnectionState}`);
-        // };
 
         const offerSdp = await rtcSocket.CreateOffer();
         await rtcSocket.SetLocalDescription(offerSdp);
@@ -74,11 +69,6 @@ export class P2P {
         payload.candidateSendId = this.socket.id;
         this.socket.emit(SocketMsgType.Candidate, payload);
       };
-      // rtcSocket.OnConnectionStateChange = (ev: Event) => {
-      //   const rtcConnectionState = (ev.currentTarget as RTCPeerConnection)
-      //     .connectionState;
-      //   console.log(`${offerSendId} is ${rtcConnectionState}`);
-      // };
 
       await rtcSocket.SetRemoteDescription(sdp);
       const answerSdp = await rtcSocket.CreateAnswer();
@@ -107,7 +97,6 @@ export class P2P {
       await rtcSocket.AddIceCandidate(candidate);
     });
 
-    // TODO: 그냥 나갔을때 이 메세지를 안받나? 아니면 connectionState 로?
     this.socket.on(SocketMsgType.OtherExit, (exitSocketId: string) => {
       const rtcSocket = this.rtcSockets[exitSocketId];
       if (rtcSocket) {

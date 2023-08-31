@@ -1,11 +1,12 @@
-import { Client, EventType } from "@src/renderer/types";
+import { RtcSocket } from "@src/p2p/RtcSocket";
 import { State } from "./PlayerSchema";
 import { Protocol } from "./Protocol";
 import { SchemaSerializer } from "./SchemaSerializer";
 import PubSub from "pubsub-js";
+import { RtcSocketEventType } from "@src/p2p/types";
 
 export class GameServer {
-  public clients: Client[] = [];
+  public rtcSockets: RtcSocket[] = [];
 
   public state: State;
 
@@ -22,22 +23,22 @@ export class GameServer {
 
     this.setState(new State());
 
-    this.token = PubSub.subscribe(EventType.ReceiveData, (msg, data) =>
+    this.token = PubSub.subscribe(RtcSocketEventType.ReceiveData, (msg, data) =>
       this.onMessageCallback(data)
     );
   }
 
-  public onJoin(client: Client) {
-    this.clients.push(client);
-    this.state.createPlayer(client.id);
+  public onJoin(rtcSocket: RtcSocket) {
+    this.rtcSockets.push(rtcSocket);
+    this.state.createPlayer(rtcSocket.id);
 
     // confirm room id that matches the room name requested to join
-    client.sendChannel.send(new Uint8Array([Protocol.JOIN_ROOM]));
+    rtcSocket.sendChannel.send(new Uint8Array([Protocol.JOIN_ROOM]));
   }
 
-  public onLeave(client: Client) {
-    this.clients = this.clients.filter((c) => c.id !== client.id);
-    this.state.removePlayer(client.id);
+  public onLeave(rtcSocket: RtcSocket) {
+    this.rtcSockets = this.rtcSockets.filter((c) => c.id !== rtcSocket.id);
+    this.state.removePlayer(rtcSocket.id);
   }
 
   public onDispose() {
@@ -65,8 +66,8 @@ export class GameServer {
   }
 
   protected broadcastPatch(): boolean {
-    if (this.clients.length > 0) {
-      return this._serializer.applyPatches(this.clients);
+    if (this.rtcSockets.length > 0) {
+      return this._serializer.applyPatches(this.rtcSockets);
     }
     return false;
   }
@@ -92,7 +93,7 @@ export class GameServer {
     }
   }
 
-  private sendFullState(client: Client): void {
+  private sendFullState(rtcSocket: RtcSocket): void {
     //client.enqueueRaw(getMessageBytes[Protocol.ROOM_STATE](this._serializer.getFullState(client)));
   }
 }
