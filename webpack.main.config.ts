@@ -1,7 +1,5 @@
 import type { Configuration } from "webpack";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const Dotenv = require("dotenv-webpack");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require("path");
 
 import { rules } from "./webpack.rules";

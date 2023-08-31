@@ -59,6 +59,30 @@ export class P2P {
       }
     });
 
+    this.socket.on(SocketMsgType.GameServer, async (gameServerId: string) => {
+      const rtcSocket = new RtcSocket(gameServerId);
+      rtcSocket.Create();
+      this.rtcSockets[gameServerId] = rtcSocket;
+
+      rtcSocket.OnIceCandidate = (payload: ICandidatePayload) => {
+        payload.candidateSendId = this.socket.id;
+        this.socket.emit(SocketMsgType.Candidate, payload);
+      };
+
+      const offerSdp = await rtcSocket.CreateOffer();
+      await rtcSocket.SetLocalDescription(offerSdp);
+
+      const offerPayload: IOfferPayload = {
+        sdp: offerSdp,
+        offerSendId: this.socket.id,
+        offerReceiveId: gameServerId,
+      };
+
+      this.socket.emit(SocketMsgType.Offer, offerPayload);
+
+      if (this.OnAddRtcSocket) this.OnAddRtcSocket(gameServerId);
+    });
+
     this.socket.on(SocketMsgType.Offer, async (data: IOfferPayload) => {
       const { sdp, offerSendId } = data;
       const rtcSocket = new RtcSocket(offerSendId);

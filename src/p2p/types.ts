@@ -11,6 +11,7 @@ export enum SocketMsgType {
   Candidate = "candidate",
   Disconnect = "disconnect",
   OtherExit = "otherExit",
+  GameServer = "gameserver",
 }
 
 export enum RtcSocketEventType {

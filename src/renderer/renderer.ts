@@ -103,6 +103,10 @@ export class App {
             break;
         }
       };
+      // TODO: SendchannelOpen 때 하는게 맞는가?
+      rtcSocket.OnSendChannelOpen = (ev: Event) => {
+        this.gameServer.onJoin(rtcSocket);
+      };
       rtcSocket.OnReceiveChannelMessage = (ev: MessageEvent<any>) => {
         addText("received-game", ev.data);
       };
