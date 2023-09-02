@@ -49,3 +49,10 @@ export const StunUrls = [
   "stun:stun3.l.google.com:19302",
   "stun:stun4.l.google.com:19302",
 ];
+
+export enum ClientState {
+  JOINING,
+  JOINED,
+  RECONNECTED,
+  LEAVING,
+}

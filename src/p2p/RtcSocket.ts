@@ -1,10 +1,16 @@
-import { DATA_CHANNEL_NAME, ICandidatePayload, StunUrls } from "./types";
+import {
+  ClientState,
+  DATA_CHANNEL_NAME,
+  ICandidatePayload,
+  StunUrls,
+} from "./types";
 
 export class RtcSocket {
   id: string;
   peerConnection: RTCPeerConnection;
   sendChannel?: RTCDataChannel;
   receiveChannel?: RTCDataChannel;
+  state: ClientState = ClientState.JOINING;
 
   OnIceCandidate?: (payload: ICandidatePayload) => void;
   OnConnectionStateChange?: (ev: Event) => void;
@@ -110,4 +116,12 @@ export class RtcSocket {
   public Send(data: any) {
     if (this.sendChannel) this.sendChannel.send(data);
   }
+
+  // public SendText(data: string) {
+  //   if (this.sendChannel) this.sendChannel.send(data);
+  // }
+
+  // public SendBuffer(data: any) {
+  //   if (this.sendChannel) this.sendChannel.send(new Uint8Array(data));
+  // }
 }

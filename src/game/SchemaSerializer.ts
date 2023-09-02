@@ -2,6 +2,7 @@ import { Schema, Reflection } from "@colyseus/schema";
 import { RtcSocket } from "@src/p2p/RtcSocket";
 import { Protocol } from "./Protocol";
 import { Serializer } from "./Serializer";
+import { ClientState } from "@src/p2p/types";
 
 export class SchemaSerializer<T> implements Serializer<T> {
   public id = "@colyseus/schema";
@@ -32,11 +33,13 @@ export class SchemaSerializer<T> implements Serializer<T> {
 
         if (
           client.peerConnection.connectionState === "connected" &&
-          client.sendChannel
+          client.sendChannel.readyState === "open"
         ) {
-          client.sendChannel.send(
-            new Uint8Array([Protocol.ROOM_STATE_PATCH, ...patches])
-          );
+          if (client.state === ClientState.JOINED) {
+            client.sendChannel.send(
+              new Uint8Array([Protocol.ROOM_STATE_PATCH, ...patches])
+            );
+          }
         }
       }
 

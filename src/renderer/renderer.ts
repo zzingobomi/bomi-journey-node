@@ -33,13 +33,15 @@ console.log(
 import "./mvp.css";
 import "./index.css";
 import { P2P } from "@src/p2p";
-import { GameServer } from "@src/game/GameServer";
+import { Room } from "@src/game/Room";
+import { GameRoomState } from "@src/game/GameRoomState";
 import { addSelectList, addText, removeSelectList, replaceText } from "./utils";
+import { GameRoom } from "@src/game/GameRoom";
 
 export class App {
   p2pNode: P2P;
   p2pGame: P2P;
-  gameServer: GameServer;
+  room: Room<GameRoomState>;
 
   constructor() {
     // NodeP2P 세팅
@@ -99,25 +101,31 @@ export class App {
             console.log(`${rtcSocket.id} is disconnected`);
             break;
           default:
-            console.log(state);
+            console.log(`${rtcSocket.id} is ${state}`);
             break;
         }
       };
       // TODO: SendchannelOpen 때 하는게 맞는가?
       rtcSocket.OnSendChannelOpen = (ev: Event) => {
-        this.gameServer.onJoin(rtcSocket);
+        this.room._onJoin(rtcSocket);
       };
       rtcSocket.OnReceiveChannelMessage = (ev: MessageEvent<any>) => {
-        addText("received-game", ev.data);
+        if (typeof ev.data === "string") {
+          this.room._onMessage(rtcSocket, JSON.parse(ev.data));
+        } else {
+          this.room._onMessageProtocol(rtcSocket, ev.data);
+        }
       };
       addSelectList("users-game", id);
     };
     this.p2pGame.OnRemoveRtcSocket = (id: string) => {
+      this.room._onLeave(id);
       removeSelectList("users-game", id);
     };
 
-    // GameServer 세팅
-    this.gameServer = new GameServer();
+    // GameRoom 세팅
+    this.room = new GameRoom();
+    this.room._onCreate();
 
     // Usage
     document
