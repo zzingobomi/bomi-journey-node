@@ -1,34 +1,77 @@
 import { RtcSocket } from "@src/p2p/RtcSocket";
-import { GameRoomState } from "./GameRoomState";
+import { GameRoomStateSchema } from "../schema/GameRoomStateSchema";
 import { Room } from "./Room";
+import { Protocol } from "@src/shared/Protocol";
+import { TransformSchema } from "../schema/TransformSchema";
+import { Vec3Schema, Vec4Schema } from "../schema/VectorSchema";
 
-export class GameRoom extends Room<GameRoomState> {
+export class GameRoom extends Room<GameRoomStateSchema> {
   OnCreate() {
     console.log("OnCreate");
 
     this.SetPatchRate(1000 / 20);
 
-    const roomState = new GameRoomState();
+    const roomState = new GameRoomStateSchema();
     this.SetState(roomState);
   }
 
   OnJoin(rtcSocket: RtcSocket) {
     console.log(`OnJoin ${rtcSocket.id}`);
-    this.state.addPlayer(rtcSocket.id);
+    // TODO: id 작업, startpoint 작업
+    const playerTransform = new TransformSchema();
+    this.state.CreatePlayer(rtcSocket.id, rtcSocket.id, playerTransform);
   }
 
   OnLeave(rtcSocketId: string) {
     console.log(`OnLeave ${rtcSocketId}`);
-    this.state.removePlayer(rtcSocketId);
+    this.state.RemovePlayer(rtcSocketId);
   }
 
   OnDispose() {
     console.log("OnDispose");
   }
 
-  OnMessage(rtcSocket: RtcSocket, { eventType, data }: any) {
-    if (eventType === "move") {
-      this.state.movePlayer(rtcSocket.id, data);
+  OnMessageProtocol(rtcSocket: RtcSocket, bytes: number[]) {
+    const code = bytes[0];
+
+    switch (code) {
+      case Protocol.ENTITY_POSITION:
+        {
+          const [x, y, z] = this.decodeFloat32Array(bytes);
+          this.state.UpdatePlayerPosition(
+            rtcSocket.id,
+            new Vec3Schema(x, y, z)
+          );
+        }
+        break;
+      case Protocol.ENTITY_QUATERNION:
+        {
+          const [x, y, z, w] = this.decodeFloat32Array(bytes);
+          this.state.UpdatePlayerQuaternion(
+            rtcSocket.id,
+            new Vec4Schema(x, y, z, w)
+          );
+        }
+        break;
+      case Protocol.ENTITY_SCALE:
+        {
+          const [x, y, z] = this.decodeFloat32Array(bytes);
+          this.state.UpdatePlayerScale(rtcSocket.id, new Vec3Schema(x, y, z));
+        }
+        break;
+      case Protocol.ENTITY_STATE:
+        // TODO: entity state
+        break;
     }
+  }
+
+  OnMessage(rtcSocket: RtcSocket, { eventType, data }: any) {
+    console.log(eventType, data);
+  }
+
+  private decodeFloat32Array(bytes: number[]): Float32Array {
+    bytes.shift(); // Remove protocol code
+    const uint8Array = new Uint8Array(bytes);
+    return new Float32Array(uint8Array.buffer);
   }
 }

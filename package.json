@@ -5,6 +5,7 @@
   "description": "Bomijourney Electron Node Application",
   "main": ".webpack/main",
   "scripts": {
+    "codegen": "node codegen.ts",
     "start": "electron-forge start",
     "start:2": "cross-env APP_PORT=9200 APP_LOGGER_PORT=9201 electron-forge start",
     "package": "electron-forge package",

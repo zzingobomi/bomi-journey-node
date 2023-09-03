@@ -1,0 +1,18 @@
+export enum Protocol {
+  // Room (10~19)
+  HANDSHAKE = 9,
+  JOIN_ROOM = 10,
+  ERROR = 11,
+  LEAVE_ROOM = 12,
+  ROOM_DATA = 13,
+  ROOM_STATE = 14,
+  ROOM_STATE_PATCH = 15,
+  ROOM_DATA_SCHEMA = 16,
+  ROOM_DATA_BYTES = 17,
+
+  // Client to Server
+  ENTITY_POSITION = 20,
+  ENTITY_QUATERNION = 21,
+  ENTITY_SCALE = 22,
+  ENTITY_STATE = 23,
+}

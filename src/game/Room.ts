@@ -1,9 +1,9 @@
 import { RtcSocket } from "@src/p2p/RtcSocket";
-import { Protocol, getMessageBytes } from "./Protocol";
 import { SchemaSerializer } from "./SchemaSerializer";
-import { GameRoomState } from "./GameRoomState";
 import { Schema } from "@colyseus/schema";
 import { ClientState } from "@src/p2p/types";
+import { Protocol } from "@src/shared/Protocol";
+import { getMessageBytes } from "@src/Utils";
 
 export abstract class Room<State extends Schema> {
   public rtcSockets: RtcSocket[] = [];
@@ -17,6 +17,10 @@ export abstract class Room<State extends Schema> {
   abstract OnJoin(rtcSocket: RtcSocket): void | Promise<any>;
   abstract OnLeave(rtcSocketId: string): void | Promise<any>;
   abstract OnDispose(): void | Promise<any>;
+  abstract OnMessageProtocol(
+    rtcSocket: RtcSocket,
+    bytes: number[]
+  ): void | Promise<any>;
   abstract OnMessage(rtcSocket: RtcSocket, data: any): void | Promise<any>;
 
   public async _onCreate() {
@@ -84,6 +88,15 @@ export abstract class Room<State extends Schema> {
         break;
       case Protocol.LEAVE_ROOM:
         console.log("leaveRoom");
+        break;
+      case Protocol.ENTITY_POSITION:
+      case Protocol.ENTITY_QUATERNION:
+      case Protocol.ENTITY_SCALE:
+      case Protocol.ENTITY_STATE:
+        this.OnMessageProtocol(rtcSocket, bytes);
+        break;
+      default:
+        console.error(`inknown protocol type! ${code}`);
         break;
     }
   }

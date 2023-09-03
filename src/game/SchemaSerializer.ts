@@ -1,8 +1,8 @@
 import { Schema, Reflection } from "@colyseus/schema";
 import { RtcSocket } from "@src/p2p/RtcSocket";
-import { Protocol } from "./Protocol";
 import { Serializer } from "./Serializer";
 import { ClientState } from "@src/p2p/types";
+import { Protocol } from "@src/shared/Protocol";
 
 export class SchemaSerializer<T> implements Serializer<T> {
   public id = "@colyseus/schema";
@@ -25,7 +25,6 @@ export class SchemaSerializer<T> implements Serializer<T> {
     if (hasChanges) {
       let numClients = rtcSockets.length;
 
-      // get patch bytes
       const patches = this.state.encode(false, [], true);
 
       while (numClients--) {
@@ -36,6 +35,7 @@ export class SchemaSerializer<T> implements Serializer<T> {
           client.sendChannel.readyState === "open"
         ) {
           if (client.state === ClientState.JOINED) {
+            console.log("patch");
             client.sendChannel.send(
               new Uint8Array([Protocol.ROOM_STATE_PATCH, ...patches])
             );

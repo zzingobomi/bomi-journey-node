@@ -34,14 +34,19 @@ import "./mvp.css";
 import "./index.css";
 import { P2P } from "@src/p2p";
 import { Room } from "@src/game/Room";
-import { GameRoomState } from "@src/game/GameRoomState";
-import { addSelectList, addText, removeSelectList, replaceText } from "./utils";
+import { GameRoomStateSchema } from "@src/schema/GameRoomStateSchema";
+import {
+  addSelectList,
+  addText,
+  removeSelectList,
+  replaceText,
+} from "../Utils";
 import { GameRoom } from "@src/game/GameRoom";
 
 export class App {
   p2pNode: P2P;
   p2pGame: P2P;
-  room: Room<GameRoomState>;
+  room: Room<GameRoomStateSchema>;
 
   constructor() {
     // NodeP2P 세팅
