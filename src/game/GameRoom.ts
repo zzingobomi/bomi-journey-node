@@ -9,7 +9,8 @@ export class GameRoom extends Room<GameRoomStateSchema> {
   OnCreate() {
     console.log("OnCreate");
 
-    this.SetPatchRate(1000 / 20);
+    //this.SetPatchRate(1000 / 20);
+    this.SetPatchRate(1000 / 60);
 
     const roomState = new GameRoomStateSchema();
     this.SetState(roomState);
@@ -60,7 +61,10 @@ export class GameRoom extends Room<GameRoomStateSchema> {
         }
         break;
       case Protocol.ENTITY_STATE:
-        // TODO: entity state
+        {
+          const state = bytes[1];
+          this.state.UpdatePlayerState(rtcSocket.id, state);
+        }
         break;
     }
   }

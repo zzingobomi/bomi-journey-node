@@ -34,4 +34,8 @@ export class GameRoomStateSchema extends Schema {
     const player = this.players.get(sessionId);
     if (player) player.SetScale(scale);
   }
+  UpdatePlayerState(sessionId: string, state: number) {
+    const player = this.players.get(sessionId);
+    if (player) player.SetState(state);
+  }
 }
