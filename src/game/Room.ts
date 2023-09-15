@@ -89,6 +89,7 @@ export abstract class Room<State extends Schema> {
       case Protocol.LEAVE_ROOM:
         console.log("leaveRoom");
         break;
+      case Protocol.ENTITY_CHANGES:
       case Protocol.ENTITY_POSITION:
       case Protocol.ENTITY_QUATERNION:
       case Protocol.ENTITY_SCALE:

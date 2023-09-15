@@ -22,6 +22,11 @@ export class GameRoomStateSchema extends Schema {
     this.players.delete(sessionId);
   }
 
+  UpdatePlayerChanges(sessionId: string, binaryPatch: number[]) {
+    const player = this.players.get(sessionId);
+    player.decode(binaryPatch);
+  }
+
   UpdatePlayerPosition(sessionId: string, position: Vec3Schema) {
     const player = this.players.get(sessionId);
     if (player) player.SetPosition(position);

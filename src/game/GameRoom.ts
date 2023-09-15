@@ -9,8 +9,8 @@ export class GameRoom extends Room<GameRoomStateSchema> {
   OnCreate() {
     console.log("OnCreate");
 
-    //this.SetPatchRate(1000 / 20);
-    this.SetPatchRate(1000 / 60);
+    this.SetPatchRate(1000 / 20);
+    //this.SetPatchRate(1000 / 60);
 
     const roomState = new GameRoomStateSchema();
     this.SetState(roomState);
@@ -36,6 +36,12 @@ export class GameRoom extends Room<GameRoomStateSchema> {
     const code = bytes[0];
 
     switch (code) {
+      case Protocol.ENTITY_CHANGES:
+        {
+          bytes.shift();
+          this.state.UpdatePlayerChanges(rtcSocket.id, bytes);
+        }
+        break;
       case Protocol.ENTITY_POSITION:
         {
           const [x, y, z] = this.decodeFloat32Array(bytes);
