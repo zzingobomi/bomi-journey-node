@@ -50,11 +50,7 @@ export class App {
 
   constructor() {
     // NodeP2P 세팅
-    this.p2pNode = new P2P(
-      process.env.WS_SCHEME,
-      process.env.WS_HOST,
-      process.env.WS_PORT
-    );
+    this.p2pNode = new P2P(process.env.WS_HOST);
     this.p2pNode.Join("noderoom1", "node");
     this.p2pNode.OnSocketConnected = (socketId: string) => {
       replaceText("socket-id-node", socketId);
@@ -85,11 +81,7 @@ export class App {
     };
 
     // GameP2P 세팅
-    this.p2pGame = new P2P(
-      process.env.WS_SCHEME,
-      process.env.WS_HOST,
-      process.env.WS_PORT
-    );
+    this.p2pGame = new P2P(process.env.WS_HOST);
     this.p2pGame.Join("userroom1", "gameserver");
     this.p2pGame.OnSocketConnected = (socketId: string) => {
       replaceText("socket-id-game", socketId);

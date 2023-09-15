@@ -17,10 +17,8 @@ export class P2P {
   OnAddRtcSocket?: (id: string) => void;
   OnRemoveRtcSocket?: (id: string) => void;
 
-  constructor(scheme: string, host: string, port: string) {
-    this.socket = io(`${scheme}://${host}:${port}`, {
-      reconnectionDelayMax: 10000,
-    });
+  constructor(host: string) {
+    this.socket = io(host, { reconnectionDelayMax: 10000 });
 
     this.socket.on(SocketMsgType.Hello, (data) => {
       if (this.OnSocketConnected) this.OnSocketConnected(this.socket.id);
