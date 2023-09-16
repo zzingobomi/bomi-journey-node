@@ -1,5 +1,6 @@
 import type { Configuration } from "webpack";
 const Dotenv = require("dotenv-webpack");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 const path = require("path");
 
 import { rules } from "./webpack.rules";
@@ -20,5 +21,15 @@ export const mainConfig: Configuration = {
     },
     extensions: [".js", ".ts", ".jsx", ".tsx", ".css", ".json"],
   },
-  plugins: [new Dotenv()],
+  plugins: [
+    new Dotenv(),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.resolve(__dirname, "./assets"),
+          to: ".",
+        },
+      ],
+    }),
+  ],
 };
