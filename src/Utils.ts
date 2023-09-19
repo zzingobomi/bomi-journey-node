@@ -33,6 +33,21 @@ export const getMessageBytes = {
   },
 };
 
+export function getGuestNodeRoomCoordinates(x: number, y: number) {
+  const nodeRooms = [];
+
+  nodeRooms.push([x + 1, y]); // 오른쪽
+  nodeRooms.push([x + 1, y + 1]); // 오른쪽 위
+  nodeRooms.push([x, y + 1]); // 위
+  nodeRooms.push([x - 1, y + 1]); // 왼쪽 위
+  nodeRooms.push([x - 1, y]); // 왼쪽
+  nodeRooms.push([x - 1, y - 1]); // 왼쪽 아래
+  nodeRooms.push([x, y - 1]); // 아래
+  nodeRooms.push([x + 1, y - 1]); // 오른쪽 아래
+
+  return nodeRooms;
+}
+
 export function utf8Read(view: number[], offset: number) {
   const length = view[offset++];
 

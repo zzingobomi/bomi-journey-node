@@ -8,6 +8,7 @@ import {
   p2pType,
 } from "./types";
 import { RtcSocket } from "./RtcSocket";
+import { getGuestNodeRoomCoordinates } from "@src/Utils";
 
 export class P2P {
   socket: Socket;
@@ -17,10 +18,23 @@ export class P2P {
   OnAddRtcSocket?: (id: string) => void;
   OnRemoveRtcSocket?: (id: string) => void;
 
-  constructor(host: string) {
+  constructor(host: string, connectType: string) {
     this.socket = io(host, { reconnectionDelayMax: 10000 });
 
+    this.socket.emit(SocketMsgType.Hello, { connectType: connectType });
+
+    // TODO: connectType 에 따라 달라져야 겠지?
     this.socket.on(SocketMsgType.Hello, (data) => {
+      const [x, y] = data.split("_");
+      this.socket.emit(SocketMsgType.JoinHostRoom, { roomId: data });
+
+      const roomIds = [];
+      const rooms = getGuestNodeRoomCoordinates(parseInt(x), parseInt(y));
+      for (const room of rooms) {
+        roomIds.push(`${room[0]}_${room[1]}`);
+      }
+      this.socket.emit(SocketMsgType.JoinGuestRoom, { roomIds: roomIds });
+
       if (this.OnSocketConnected) this.OnSocketConnected(this.socket.id);
     });
   }

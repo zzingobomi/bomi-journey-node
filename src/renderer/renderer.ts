@@ -45,84 +45,84 @@ import { GameRoom } from "@src/game/GameRoom";
 
 export class App {
   p2pNode: P2P;
-  p2pGame: P2P;
-  room: Room<GameRoomStateSchema>;
+  //p2pGame: P2P;
+  //room: Room<GameRoomStateSchema>;
 
   constructor() {
     // NodeP2P 세팅
-    this.p2pNode = new P2P(process.env.WS_HOST);
-    this.p2pNode.Join("noderoom1", "node");
-    this.p2pNode.OnSocketConnected = (socketId: string) => {
-      replaceText("socket-id-node", socketId);
-    };
-    this.p2pNode.OnAddRtcSocket = (id: string) => {
-      const rtcSocket = this.p2pNode.GetRtcSocket(id);
-      rtcSocket.OnConnectionStateChange = (ev: Event) => {
-        const state = (ev.currentTarget as RTCPeerConnection).connectionState;
-        switch (state) {
-          case "connected":
-            console.log(`${rtcSocket.id} is connected`);
-            break;
-          case "disconnected":
-            console.log(`${rtcSocket.id} is disconnected`);
-            break;
-          default:
-            console.log(state);
-            break;
-        }
-      };
-      rtcSocket.OnReceiveChannelMessage = (ev: MessageEvent<any>) => {
-        addText("received-node", ev.data);
-      };
-      addSelectList("others-node", id);
-    };
-    this.p2pNode.OnRemoveRtcSocket = (id: string) => {
-      removeSelectList("others-node", id);
-    };
+    this.p2pNode = new P2P(process.env.WS_HOST, "node");
+    // this.p2pNode.Join("noderoom1", "node");
+    // this.p2pNode.OnSocketConnected = (socketId: string) => {
+    //   replaceText("socket-id-node", socketId);
+    // };
+    // this.p2pNode.OnAddRtcSocket = (id: string) => {
+    //   const rtcSocket = this.p2pNode.GetRtcSocket(id);
+    //   rtcSocket.OnConnectionStateChange = (ev: Event) => {
+    //     const state = (ev.currentTarget as RTCPeerConnection).connectionState;
+    //     switch (state) {
+    //       case "connected":
+    //         console.log(`${rtcSocket.id} is connected`);
+    //         break;
+    //       case "disconnected":
+    //         console.log(`${rtcSocket.id} is disconnected`);
+    //         break;
+    //       default:
+    //         console.log(state);
+    //         break;
+    //     }
+    //   };
+    //   rtcSocket.OnReceiveChannelMessage = (ev: MessageEvent<any>) => {
+    //     addText("received-node", ev.data);
+    //   };
+    //   addSelectList("others-node", id);
+    // };
+    // this.p2pNode.OnRemoveRtcSocket = (id: string) => {
+    //   removeSelectList("others-node", id);
+    // };
 
     // GameP2P 세팅
-    this.p2pGame = new P2P(process.env.WS_HOST);
-    this.p2pGame.Join("userroom1", "gameserver");
-    this.p2pGame.OnSocketConnected = (socketId: string) => {
-      replaceText("socket-id-game", socketId);
-    };
-    this.p2pGame.OnAddRtcSocket = (id: string) => {
-      const rtcSocket = this.p2pGame.GetRtcSocket(id);
-      rtcSocket.OnConnectionStateChange = (ev: Event) => {
-        const state = (ev.currentTarget as RTCPeerConnection).connectionState;
-        switch (state) {
-          case "connected":
-            console.log(`${rtcSocket.id} is connected`);
-            break;
-          case "disconnected":
-            console.log(`${rtcSocket.id} is disconnected`);
-            break;
-          default:
-            console.log(`${rtcSocket.id} is ${state}`);
-            break;
-        }
-      };
-      // TODO: SendchannelOpen 때 하는게 맞는가?
-      rtcSocket.OnSendChannelOpen = (ev: Event) => {
-        this.room._onJoin(rtcSocket);
-      };
-      rtcSocket.OnReceiveChannelMessage = (ev: MessageEvent<any>) => {
-        if (typeof ev.data === "string") {
-          this.room._onMessage(rtcSocket, JSON.parse(ev.data));
-        } else {
-          this.room._onMessageProtocol(rtcSocket, ev.data);
-        }
-      };
-      addSelectList("users-game", id);
-    };
-    this.p2pGame.OnRemoveRtcSocket = (id: string) => {
-      this.room._onLeave(id);
-      removeSelectList("users-game", id);
-    };
+    // this.p2pGame = new P2P(process.env.WS_HOST);
+    // this.p2pGame.Join("userroom1", "gameserver");
+    // this.p2pGame.OnSocketConnected = (socketId: string) => {
+    //   replaceText("socket-id-game", socketId);
+    // };
+    // this.p2pGame.OnAddRtcSocket = (id: string) => {
+    //   const rtcSocket = this.p2pGame.GetRtcSocket(id);
+    //   rtcSocket.OnConnectionStateChange = (ev: Event) => {
+    //     const state = (ev.currentTarget as RTCPeerConnection).connectionState;
+    //     switch (state) {
+    //       case "connected":
+    //         console.log(`${rtcSocket.id} is connected`);
+    //         break;
+    //       case "disconnected":
+    //         console.log(`${rtcSocket.id} is disconnected`);
+    //         break;
+    //       default:
+    //         console.log(`${rtcSocket.id} is ${state}`);
+    //         break;
+    //     }
+    //   };
+    //   // TODO: SendchannelOpen 때 하는게 맞는가?
+    //   rtcSocket.OnSendChannelOpen = (ev: Event) => {
+    //     this.room._onJoin(rtcSocket);
+    //   };
+    //   rtcSocket.OnReceiveChannelMessage = (ev: MessageEvent<any>) => {
+    //     if (typeof ev.data === "string") {
+    //       this.room._onMessage(rtcSocket, JSON.parse(ev.data));
+    //     } else {
+    //       this.room._onMessageProtocol(rtcSocket, ev.data);
+    //     }
+    //   };
+    //   addSelectList("users-game", id);
+    // };
+    // this.p2pGame.OnRemoveRtcSocket = (id: string) => {
+    //   this.room._onLeave(id);
+    //   removeSelectList("users-game", id);
+    // };
 
-    // GameRoom 세팅
-    this.room = new GameRoom();
-    this.room._onCreate();
+    // // GameRoom 세팅
+    // this.room = new GameRoom();
+    // this.room._onCreate();
 
     // Usage
     document
