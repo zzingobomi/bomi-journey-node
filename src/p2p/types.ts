@@ -6,7 +6,7 @@ export enum SocketMsgType {
   Hello = "hello",
   JoinHostRoom = "joinHostRoom",
   JoinGuestRoom = "joinGuestRoom",
-  JoinRoom = "joinRoom",
+  JoinUserRoom = "joinUserRoom",
   OtherHosts = "otherHosts",
   OtherUsers = "otherUsers",
   Offer = "offer",

@@ -11,6 +11,8 @@ import { RtcSocket } from "./RtcSocket";
 import { getGuestNodeRoomCoordinates } from "@src/Utils";
 
 export class P2P {
+  nodeId: string;
+
   socket: Socket;
   rtcSockets: IRtcSockets = {};
 
@@ -18,107 +20,96 @@ export class P2P {
   OnAddRtcSocket?: (id: string) => void;
   OnRemoveRtcSocket?: (id: string) => void;
 
-  constructor(host: string, connectType: string) {
-    this.socket = io(host, { reconnectionDelayMax: 10000 });
-
-    this.socket.emit(SocketMsgType.Hello, { connectType: connectType });
-
-    // TODO: connectType 에 따라 달라져야 겠지?
-    this.socket.on(SocketMsgType.Hello, (data) => {
-      const [x, y] = data.split("_");
-      this.socket.emit(SocketMsgType.JoinHostRoom, { roomId: data });
-
-      const roomIds = [];
-      const rooms = getGuestNodeRoomCoordinates(parseInt(x), parseInt(y));
-      for (const room of rooms) {
-        roomIds.push(`${room[0]}_${room[1]}`);
-      }
-      this.socket.emit(SocketMsgType.JoinGuestRoom, { roomIds: roomIds });
-
-      if (this.OnSocketConnected) this.OnSocketConnected(this.socket.id);
-    });
-
-    this.socket.on(SocketMsgType.OtherHosts, async (otherHosts: string[]) => {
-      console.log(otherHosts);
-      for (const otherHost of otherHosts) {
-        const rtcSocket = new RtcSocket(otherHost);
-        rtcSocket.Create();
-        this.rtcSockets[otherHost] = rtcSocket;
-
-        rtcSocket.OnIceCandidate = (payload: ICandidatePayload) => {
-          payload.candidateSendId = this.socket.id;
-          this.socket.emit(SocketMsgType.Candidate, payload);
-        };
-
-        const offerSdp = await rtcSocket.CreateOffer();
-        await rtcSocket.SetLocalDescription(offerSdp);
-
-        const offerPayload: IOfferPayload = {
-          sdp: offerSdp,
-          offerSendId: this.socket.id,
-          offerReceiveId: otherHost,
-        };
-
-        this.socket.emit(SocketMsgType.Offer, offerPayload);
-
-        if (this.OnAddRtcSocket) this.OnAddRtcSocket(otherHost);
-      }
-    });
-
-    this.socket.on(SocketMsgType.Offer, async (data: IOfferPayload) => {
-      const { sdp, offerSendId } = data;
-      const rtcSocket = new RtcSocket(offerSendId);
-      rtcSocket.Create();
-      this.rtcSockets[offerSendId] = rtcSocket;
-
-      rtcSocket.OnIceCandidate = (payload: ICandidatePayload) => {
-        payload.candidateSendId = this.socket.id;
-        this.socket.emit(SocketMsgType.Candidate, payload);
-      };
-
-      await rtcSocket.SetRemoteDescription(sdp);
-      const answerSdp = await rtcSocket.CreateAnswer();
-      rtcSocket.SetLocalDescription(answerSdp);
-
-      const answerPayload: IAnswerPayload = {
-        sdp: answerSdp,
-        answerSendId: this.socket.id,
-        answerReceiveId: offerSendId,
-      };
-
-      this.socket.emit(SocketMsgType.Answer, answerPayload);
-
-      if (this.OnAddRtcSocket) this.OnAddRtcSocket(offerSendId);
-    });
-
-    this.socket.on(SocketMsgType.Answer, (data: IAnswerPayload) => {
-      const { sdp, answerSendId } = data;
-      const rtcSocket = this.rtcSockets[answerSendId];
-      rtcSocket.SetRemoteDescription(sdp);
-    });
-
-    this.socket.on(SocketMsgType.Candidate, async (data: ICandidatePayload) => {
-      const { candidate, candidateSendId } = data;
-      const rtcSocket = this.rtcSockets[candidateSendId];
-      await rtcSocket.AddIceCandidate(candidate);
-    });
-
-    this.socket.on(SocketMsgType.OtherHostExit, (exitSocketId: string) => {
-      const rtcSocket = this.rtcSockets[exitSocketId];
-      if (rtcSocket) {
-        rtcSocket.CloseSendChannel();
-        rtcSocket.CloseReceiveChannel();
-        this.rtcSockets[exitSocketId] = null;
-        delete this.rtcSockets[exitSocketId];
-
-        if (this.OnRemoveRtcSocket) this.OnRemoveRtcSocket(exitSocketId);
-      }
-    });
-
-    this.socket.on(SocketMsgType.Disconnect, (data) => {
-      console.log(data);
-    });
+  constructor() {
+    // this.socket = io(host, { reconnectionDelayMax: 10000 });
+    // this.socket.emit(SocketMsgType.Hello, { connectType: connectType });
+    // if (connectType === "node") {
+    //   this.socket.on(SocketMsgType.Hello, (data) => {
+    //     const [x, y] = data.split("_");
+    //     this.socket.emit(SocketMsgType.JoinHostRoom, { roomId: data });
+    //     const roomIds = [];
+    //     const rooms = getGuestNodeRoomCoordinates(parseInt(x), parseInt(y));
+    //     for (const room of rooms) {
+    //       roomIds.push(`${room[0]}_${room[1]}`);
+    //     }
+    //     this.socket.emit(SocketMsgType.JoinGuestRoom, { roomIds: roomIds });
+    //     if (this.OnSocketConnected) this.OnSocketConnected(this.socket.id);
+    //   });
+    //   this.socket.on(SocketMsgType.OtherHosts, async (otherHosts: string[]) => {
+    //     console.log(otherHosts);
+    //     for (const otherHost of otherHosts) {
+    //       const rtcSocket = new RtcSocket(otherHost);
+    //       rtcSocket.Create();
+    //       this.rtcSockets[otherHost] = rtcSocket;
+    //       rtcSocket.OnIceCandidate = (payload: ICandidatePayload) => {
+    //         payload.candidateSendId = this.socket.id;
+    //         this.socket.emit(SocketMsgType.Candidate, payload);
+    //       };
+    //       const offerSdp = await rtcSocket.CreateOffer();
+    //       await rtcSocket.SetLocalDescription(offerSdp);
+    //       const offerPayload: IOfferPayload = {
+    //         sdp: offerSdp,
+    //         offerSendId: this.socket.id,
+    //         offerReceiveId: otherHost,
+    //       };
+    //       this.socket.emit(SocketMsgType.Offer, offerPayload);
+    //       if (this.OnAddRtcSocket) this.OnAddRtcSocket(otherHost);
+    //     }
+    //   });
+    // } else if (connectType === "gameServer") {
+    //   // TODO:
+    // }
+    // this.socket.on(SocketMsgType.Offer, async (data: IOfferPayload) => {
+    //   const { sdp, offerSendId } = data;
+    //   const rtcSocket = new RtcSocket(offerSendId);
+    //   rtcSocket.Create();
+    //   this.rtcSockets[offerSendId] = rtcSocket;
+    //   rtcSocket.OnIceCandidate = (payload: ICandidatePayload) => {
+    //     payload.candidateSendId = this.socket.id;
+    //     this.socket.emit(SocketMsgType.Candidate, payload);
+    //   };
+    //   await rtcSocket.SetRemoteDescription(sdp);
+    //   const answerSdp = await rtcSocket.CreateAnswer();
+    //   rtcSocket.SetLocalDescription(answerSdp);
+    //   const answerPayload: IAnswerPayload = {
+    //     sdp: answerSdp,
+    //     answerSendId: this.socket.id,
+    //     answerReceiveId: offerSendId,
+    //   };
+    //   this.socket.emit(SocketMsgType.Answer, answerPayload);
+    //   if (this.OnAddRtcSocket) this.OnAddRtcSocket(offerSendId);
+    // });
+    // this.socket.on(SocketMsgType.Answer, (data: IAnswerPayload) => {
+    //   const { sdp, answerSendId } = data;
+    //   const rtcSocket = this.rtcSockets[answerSendId];
+    //   rtcSocket.SetRemoteDescription(sdp);
+    // });
+    // this.socket.on(SocketMsgType.Candidate, async (data: ICandidatePayload) => {
+    //   const { candidate, candidateSendId } = data;
+    //   const rtcSocket = this.rtcSockets[candidateSendId];
+    //   await rtcSocket.AddIceCandidate(candidate);
+    // });
+    // this.socket.on(SocketMsgType.OtherHostExit, (exitSocketId: string) => {
+    //   const rtcSocket = this.rtcSockets[exitSocketId];
+    //   if (rtcSocket) {
+    //     rtcSocket.CloseSendChannel();
+    //     rtcSocket.CloseReceiveChannel();
+    //     this.rtcSockets[exitSocketId] = null;
+    //     delete this.rtcSockets[exitSocketId];
+    //     if (this.OnRemoveRtcSocket) this.OnRemoveRtcSocket(exitSocketId);
+    //   }
+    // });
+    // this.socket.on(SocketMsgType.Disconnect, (data) => {
+    //   console.log(data);
+    // });
   }
+
+  public async GetNodeId(url: string) {
+    const nodeId = await fetch(`${url}/nodeid`);
+    console.log(nodeId);
+  }
+
+  public Join(host: string, connectType: string) {}
 
   // public Join(roomId: string, type: p2pType) {
   //   this.socket.emit(SocketMsgType.JoinRoom, {

@@ -45,12 +45,13 @@ import { GameRoom } from "@src/game/GameRoom";
 
 export class App {
   p2pNode: P2P;
-  //p2pGame: P2P;
+  p2pGame: P2P;
   //room: Room<GameRoomStateSchema>;
 
   constructor() {
     // NodeP2P 세팅
-    this.p2pNode = new P2P(process.env.WS_HOST, "node");
+    this.p2pNode = new P2P();
+    this.p2pNode.GetNodeId(process.env.API_HOST);
     this.p2pNode.OnSocketConnected = (socketId: string) => {
       replaceText("socket-id-node", socketId);
     };
@@ -80,8 +81,7 @@ export class App {
     };
 
     // GameP2P 세팅
-    // this.p2pGame = new P2P(process.env.WS_HOST);
-    // this.p2pGame.Join("userroom1", "gameserver");
+    // this.p2pGame = new P2P(process.env.WS_HOST, "gameServer");
     // this.p2pGame.OnSocketConnected = (socketId: string) => {
     //   replaceText("socket-id-game", socketId);
     // };
@@ -103,19 +103,19 @@ export class App {
     //   };
     //   // TODO: SendchannelOpen 때 하는게 맞는가?
     //   rtcSocket.OnSendChannelOpen = (ev: Event) => {
-    //     this.room._onJoin(rtcSocket);
+    //     //this.room._onJoin(rtcSocket);
     //   };
     //   rtcSocket.OnReceiveChannelMessage = (ev: MessageEvent<any>) => {
     //     if (typeof ev.data === "string") {
-    //       this.room._onMessage(rtcSocket, JSON.parse(ev.data));
+    //       //this.room._onMessage(rtcSocket, JSON.parse(ev.data));
     //     } else {
-    //       this.room._onMessageProtocol(rtcSocket, ev.data);
+    //       //this.room._onMessageProtocol(rtcSocket, ev.data);
     //     }
     //   };
     //   addSelectList("users-game", id);
     // };
     // this.p2pGame.OnRemoveRtcSocket = (id: string) => {
-    //   this.room._onLeave(id);
+    //   //this.room._onLeave(id);
     //   removeSelectList("users-game", id);
     // };
 
